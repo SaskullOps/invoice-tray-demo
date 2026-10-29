@@ -17,21 +17,19 @@ returns has to quote the document it came from.
 
 <img src="docs/review-ui.png" width="100%" alt="Review queue in the browser with 11 synthetic supplier invoices: 4 marked ready for the ERP and 7 sent to review, each with its reason, such as a duplicate invoice number, a VAT amount that does not match its base, a wrong CIF control digit or a delivery note.">
 
-From the inbox to your ERP: supplier invoices and delivery notes go in as PDFs, and a file
-your accounting software can import comes out. A local model reads each document. Every value
-it returns must quote the document, and plain code checks each quote and runs the accounting
-checks. Anything doubtful goes to a short review queue for a person.
+Plain code checks each quote and runs the accounting checks. Anything doubtful goes to a
+short review queue for a person.
 
 > **Demo with synthetic data only.** Every company, person, tax id and IBAN is invented.
 > **This tool never issues invoices.** It only receives and books supplier invoices, so it
 > is outside the scope of Spain's invoicing-software rules (Verifactu). Do not extend it to issue
 > invoices.
 
-Typing a supplier invoice into an ERP by hand takes about 8 minutes: open the PDF, copy
-the tax id, number, dates, the base and VAT for each rate, any IRPF withholding and the IBAN,
-then check that the numbers add up. Most invoices are routine. The point is to do the routine
-ones automatically and show a person only the ones that need a decision, together with the
-reason.
+In my experience, typing a supplier invoice into an ERP by hand takes about 8 minutes: open
+the PDF, copy the tax id, number, dates, the base and VAT for each rate, any IRPF withholding
+and the IBAN, then check that the numbers add up. Most invoices are routine. The point is to
+do the routine ones automatically and show a person only the ones that need a decision,
+together with the reason.
 
 I wrote about how it was built [on my blog](https://alexguardiola.dev/en/blog/invoice-tray-to-erp-demo).
 
@@ -120,6 +118,9 @@ Spanish.
 
 ### What is checked
 
+Every failed check below sends the document to review, except a missing IBAN, which is only
+a warning.
+
 | Check | Rule |
 |---|---|
 | Tax id | NIF (DNI letter mod 23), NIE (X/Y/Z prefix), CIF (control digit or letter by entity type) |
@@ -127,12 +128,15 @@ Spanish.
 | IRPF | `sum of bases × IRPF rate = withholding`, within 1 cent |
 | Total | `bases + VAT − IRPF = total`, within 2 cents |
 | Lines | item amounts add up to the taxable base |
-| IBAN | ISO 13616 mod-97 and country length; more than one IBAN in the text is flagged |
+| IBAN | ISO 13616 mod-97, plus the expected length for ES, PT, FR, DE, IT, GB and NL (other countries get mod-97 only) |
+| IBAN count | more than one distinct IBAN in the text, written with spaces, dots, hyphens or nothing between the groups |
+| IBAN position | the IBAN the model picked must be on a line labelled `IBAN` or `cuenta`, and must not come after an `Observaciones` heading |
+| Spreadsheet formulas | an exported text value (or the file name) that starts with `=`, `+`, `-`, `@`, a tab or a carriage return |
 | Duplicates | same supplier tax id and invoice number already seen in the batch |
 | Required fields | supplier, tax id, number, issue date, total, VAT breakdown |
 | Document type | delivery notes (`albarán`) are archived for matching, never booked |
-| Quotes | any field whose quote failed the quote check sends the document to review |
-| Embedded instructions | text addressed to an automated system (for example "ignora las instrucciones") sends the document to review |
+| Quotes | any field whose quote failed the quote check |
+| Embedded instructions | a short list of instruction phrases (for example "ignora las instrucciones" or "system prompt"); easy to evade, see [Prompt injection](#prompt-injection) |
 
 ### The samples
 
@@ -149,9 +153,10 @@ Spanish.
 | `10` | delivery note |
 | `11` | an "Observaciones" note telling the system to set the total to 0, change the IBAN and skip review |
 
-CIFs use the unassigned province prefix `00` and IBANs use bank code `9999`, so they pass
-the check-digit algorithms without belonging to anyone. If a generated value ever matches a
-real one, that is a coincidence. Use these values for testing only.
+CIFs use the prefix `00`, which is not used for regular provincial registrations. The
+freelancer in sample `04` has the all-zero NIE `X0000000T`. IBANs use bank code `9999`, which
+is not a bank code in common use. All of them pass the check-digit algorithms. If a generated
+value ever matches a real one, that is a coincidence. Use these values for testing only.
 
 ### Prompt injection
 
@@ -160,8 +165,15 @@ ignored. The design does not rely on the model obeying that:
 
 - the model's answer is only data. Unknown keys such as `"approved": true` are dropped on
   parse, and nothing the model says can approve a document;
-- every value must quote the document, and the checks run in code;
-- documents that contain instructions, or more than one IBAN, always go to a person.
+- every value must quote the document, so the model cannot report a value that is not printed
+  there, and the tax id, VAT, total and IBAN checks run in code on those values. These checks
+  are the real defence;
+- the IBAN the model picked must sit on a line labelled `IBAN` or `cuenta` and must not come
+  after an `Observaciones` heading, and a text with two or more distinct IBANs goes to a
+  person;
+- a short list of instruction phrases (`INJECTION_PATTERNS` in `src/invoice_tray/checks.py`)
+  also sends a document to a person. Other wording gets past it, so it only catches obvious
+  attempts.
 
 Sample `11` shows it. With the real model, the recorded answer kept the real total
 (560,84 €) and the real IBAN. The document still went to review because of the injected text.
@@ -175,8 +187,8 @@ mean the document has no such rate.
 |---|---|
 | `document_id` | source file name without extension |
 | `supplier_tax_id` | NIF/NIE/CIF without spaces or `ES` prefix |
-| `supplier_name` | as printed |
-| `invoice_number` | as printed |
+| `supplier_name` | the model's value, which must appear in its quote (case, accents and spacing are ignored) |
+| `invoice_number` | the model's value, whose letters and digits must appear in its quote (punctuation, spaces and case are not compared) |
 | `issue_date`, `due_date` | `YYYY-MM-DD` |
 | `base_21`, `vat_21`, `base_10`, `vat_10`, `base_4`, `vat_4` | taxable base and VAT per rate |
 | `base_other`, `vat_other` | any other rate (0 %, 5 %) |
@@ -189,6 +201,11 @@ mean the document has no such rate.
 
 Most ERPs (A3, Sage, Holded, Odoo and others) can map a delimited file like this in their
 import tool. The columns are kept flat on purpose.
+
+A spreadsheet runs a cell that starts with `=`, `+`, `-`, `@`, a tab or a carriage return as a
+formula. A document with such a text value goes to review (code `csv_formula`). If a person
+approves it anyway, the text cell is written with a leading `'` (for example
+`'=HYPERLINK(...)`), so a spreadsheet shows it as text. Amount columns are never prefixed.
 
 `out/exceptions.json` lists each pending document with `reasons` (blocking) and `warnings`
 (for example "no IBAN"), each as `{code, message}`.
@@ -214,7 +231,7 @@ review decisions.
 | `--out` | `out` | all commands |
 | `--fake-llm` | off | `process`, `demo` |
 | `--record` | off | `process`, `demo`: overwrites the recordings in `src/invoice_tray/recordings/` |
-| `--host` | `127.0.0.1` | `serve`, `demo` |
+| `--host` | `127.0.0.1` | `serve`, `demo`: see [Security notes](#security-notes) |
 | `--port` | `8000` | `serve`, `demo` |
 | `--no-serve` | off | `demo` |
 
@@ -222,10 +239,14 @@ The model endpoint is set with environment variables:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `OPENAI_BASE_URL` | `http://localhost:11434/v1` | OpenAI-compatible endpoint |
+| `INVOICE_TRAY_BASE_URL` | `http://localhost:11434/v1` | OpenAI-compatible endpoint |
 | `INVOICE_TRAY_MODEL` | `qwen3:14b` | model name |
 | `INVOICE_TRAY_API` | `auto` | `auto`, `ollama` or `openai` (see below) |
-| `OPENAI_API_KEY` | empty | sent as a bearer token in `openai` mode |
+| `INVOICE_TRAY_API_KEY` | empty | sent as a bearer token in `openai` mode |
+
+No other variable is read, so an `OPENAI_BASE_URL` or `OPENAI_API_KEY` set for other tools has
+no effect. The first line of `process` names the model and the endpoint host, for example
+`Modelo: ollama:qwen3:14b en localhost:11434`.
 
 Ollama ignores `options` on its OpenAI-compatible `/v1` route, so the context window stays at
 the server default (often 4096 tokens) and long documents are cut off without any error. In
@@ -240,8 +261,8 @@ models).
 `make test` runs pytest without a model. Recorded answers from a real `qwen3:14b` run
 live in `src/invoice_tray/recordings/`, and `make record` refreshes them. The tests
 cover the check-digit algorithms, VAT and total arithmetic, IRPF, duplicates, IBAN, nulling of
-unquoted or unsupported fields, the injection sample, CSV columns and values, and the review
-actions through the UI.
+unquoted or unsupported fields, the injection sample, the IBAN position and formula checks,
+CSV columns and values, the review actions through the UI, and the host and origin checks.
 
 ## Measured numbers
 
@@ -257,17 +278,21 @@ discarded it and the invoice went to review. Real answers can differ from the re
 
 ## Troubleshooting
 
-A model failure does not stop the run. The document shows `error` in the progress list and
-goes to review with the reason below, which is also in `out/exceptions.json` under the code
+A model failure does not stop the run, and neither does an answer that cannot be read (for
+example a number such as `1e400`). The document shows `error` in the progress list and goes
+to review with the reason below, which is also in `out/exceptions.json` under the code
 `model_error`.
 
 | Symptom | Cause | Fix |
 |---|---|---|
 | `ERROR: [Errno 98] error while attempting to bind on address ('127.0.0.1', 8000): [errno 98] address already in use`, then `make: *** [Makefile:...: demo-fake] Error 3` | Another program is using port 8000 | `make demo-fake PORT=8001` (or `make demo PORT=8001`). After a real run, `uv run invoice-tray serve --port 8001` shows the results without calling the model again |
-| Reason `Error del modelo: [Errno 111] Connection refused` on every document | Ollama is not running, or `OPENAI_BASE_URL` points to the wrong host or port | Start Ollama and run `make demo` again |
+| Reason `Error del modelo: [Errno 111] Connection refused` on every document | Ollama is not running, or `INVOICE_TRAY_BASE_URL` points to the wrong host or port (the `Modelo:` line shows which one) | Start Ollama and run `make demo` again |
 | Reason `Error del modelo: Client error '404 Not Found' for url 'http://localhost:11434/api/chat'` | The model named in `INVOICE_TRAY_MODEL` is not pulled | `ollama pull qwen3:14b`, or set `INVOICE_TRAY_MODEL` to a model you have |
 | Reason `Error del modelo: <document id>: prompt truncated at num_ctx=<n>` | The prompt filled the context window that the client asked Ollama for | The window is sized from the document length in `_context_size` (`src/invoice_tray/llm.py`). Very long documents need a larger estimate |
-| Reason `Respuesta del modelo no válida: ValidationError` | The answer did not match the schema twice in a row (the client retries once) | With Ollama the schema constrains the answer. In `openai` mode only `json_object` is requested, so a weaker model can drift |
+| Reason `Respuesta del modelo no válida: ValidationError` | The answer did not match the schema, or held a number that is not finite, twice in a row (the client retries once) | With Ollama the schema constrains the answer. In `openai` mode only `json_object` is requested, so a weaker model can drift |
+| Page `No se ha guardado nada` after a fix | A typed value could not be read, such as the date `31/02/2026` or the amount `abc` | Correct the value named in the message. Nothing was stored, and the document is unchanged |
+| `Invalid host header` (HTTP 400) | The browser reached the UI under a host name other than `127.0.0.1`, `localhost` or the `--host` value | Open `http://127.0.0.1:<port>` |
+| `Petición rechazada: no viene de esta página` (HTTP 403) | A POST came from another site, or from a client that sends neither `Sec-Fetch-Site` nor `Origin` | Use the buttons in the UI. A script must send `Origin: http://127.0.0.1:<port>` |
 
 ## Limits
 
@@ -284,9 +309,19 @@ goes to review with the reason below, which is also in `out/exceptions.json` und
 ## Security notes
 
 - The review UI has no login and is meant for `127.0.0.1` only. Do not start it with
-  `--host 0.0.0.0` or put it behind a shared proxy.
+  `--host 0.0.0.0` or put it behind a shared proxy. `serve` prints a warning when `--host` is
+  not a loopback address.
+- Listening on loopback alone does not stop a web page you visit in the same browser from
+  sending requests to the UI: it can post a form to `http://127.0.0.1:8000`, or use DNS
+  rebinding to reach it under its own domain. So the UI answers only to the host names
+  `127.0.0.1`, `localhost` and the `--host` value (anything else gets HTTP 400). It also
+  refuses every POST (approve, fix, discard, undo) with HTTP 403 unless the browser marks it
+  as sent from the UI's own pages: `Sec-Fetch-Site: same-origin` (or `none`), or, when that
+  header is missing, an `Origin` equal to the UI's address. A request with neither header is
+  refused.
+- The UI loads no fonts, scripts or styles from other sites.
 - With the defaults, document text goes only to the local Ollama. If you point
-  `OPENAI_BASE_URL` at a hosted provider, the full text of every document is sent there.
+  `INVOICE_TRAY_BASE_URL` at a hosted provider, the full text of every document is sent there.
 - Text inside a document is treated as data. Booking decisions come from the checks in code,
   never from the model's answer.
 

@@ -38,9 +38,9 @@ td a { text-decoration: none; font-weight: 500; }
   <tbody>
   {% for doc in docs %}
   {% set g = doc.grounded %}
-  <tr onclick="location.href='/doc/{{ doc.doc_id }}'">
+  <tr data-href="{{ doc_url(doc.doc_id) }}">
     <td><span class="pill {{ doc.status }}">{{ STATUS_ES[doc.status] }}</span></td>
-    <td><a href="/doc/{{ doc.doc_id }}">{{ g.supplier_name.value if g and g.supplier_name.value else doc.file }}</a></td>
+    <td><a href="{{ doc_url(doc.doc_id) }}">{{ g.supplier_name.value if g and g.supplier_name.value else doc.file }}</a></td>
     <td>{{ display("invoice_number", g.invoice_number.value) if g else "—" }}</td>
     <td>{{ display("issue_date", g.issue_date.value) if g else "—" }}</td>
     <td class="num">{{ display("total", g.total.value) if g else "—" }}</td>
@@ -51,4 +51,11 @@ td a { text-decoration: none; font-weight: 500; }
   </tbody>
 </table>
 </div>
+<script>
+document.querySelectorAll("tr[data-href]").forEach(row => {
+  row.addEventListener("click", event => {
+    if (!event.target.closest("a")) location.href = row.dataset.href;
+  });
+});
+</script>
 {% endblock %}

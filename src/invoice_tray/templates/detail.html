@@ -48,7 +48,7 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; }
 {% set g = doc.grounded %}
 <nav class="crumbs">
   <a href="/">← Todas las facturas</a>
-  {% if next_id %}<a href="/doc/{{ next_id }}">Siguiente a revisar →</a>{% endif %}
+  {% if next_id %}<a href="{{ doc_url(next_id) }}">Siguiente a revisar →</a>{% endif %}
 </nav>
 <div class="title">
   <h1>{{ g.supplier_name.value if g and g.supplier_name.value else doc.file }}</h1>
@@ -57,7 +57,7 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; }
 </div>
 <div class="grid">
   <div class="card doc">
-    <div class="doc-head"><h2>Texto del documento</h2><a href="/pdf/{{ doc.doc_id }}" target="_blank">Ver PDF original</a></div>
+    <div class="doc-head"><h2>Texto del documento</h2><a href="{{ pdf_url(doc.doc_id) }}" target="_blank">Ver PDF original</a></div>
     <pre>{{ doc|highlight }}</pre>
   </div>
   <div>
@@ -114,25 +114,26 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; }
     {% if doc.review %}
     <section class="card">
       <h2>Revisión</h2>
-      <form method="post" action="/doc/{{ doc.doc_id }}/undo"><button class="btn">Deshacer revisión</button></form>
+      <form method="post" action="{{ doc_url(doc.doc_id, 'undo') }}"><button class="btn">Deshacer revisión</button></form>
     </section>
     {% elif doc.status == "exception" and g %}
     <section class="card">
       <h2>Corregir</h2>
-      <form class="fix" method="post" action="/doc/{{ doc.doc_id }}/fix">
+      {% if errors %}<div class="banner exception" role="alert">No se ha guardado nada. {{ errors|join(" · ") }}</div>{% endif %}
+      <form class="fix" method="post" action="{{ doc_url(doc.doc_id, 'fix') }}">
         {% for key in editable %}
-        <label>{{ field_label(key) }}<input type="text" name="{{ key }}" value="{{ display_raw(doc, key) }}"></label>
+        <label>{{ field_label(key) }}<input type="text" name="{{ key }}" value="{{ typed.get(key, display_raw(doc, key)) }}"></label>
         {% endfor %}
         {% for key, f in g.all_grounded() %}{% if key.startswith("base_") or key.startswith("vat_") %}
-        <label>{{ field_label(key) }}<input type="text" name="{{ key }}" value="{{ display_raw(doc, key) }}"></label>
+        <label>{{ field_label(key) }}<input type="text" name="{{ key }}" value="{{ typed.get(key, display_raw(doc, key)) }}"></label>
         {% endif %}{% endfor %}
         <label>Nota<input type="text" name="note" placeholder="Por ejemplo: IBAN confirmado por teléfono"></label>
         <div class="actions"><button class="btn primary">Guardar y volver a comprobar</button></div>
       </form>
       <div class="actions">
-        <form method="post" action="/doc/{{ doc.doc_id }}/approve"><input type="hidden" name="note" value="Aprobada manualmente">
+        <form method="post" action="{{ doc_url(doc.doc_id, 'approve') }}"><input type="hidden" name="note" value="Aprobada manualmente">
           <button class="btn">{{ "Archivar albarán" if doc.reasons|selectattr("code","equalto","delivery_note")|list else "Aprobar tal cual" }}</button></form>
-        <form method="post" action="/doc/{{ doc.doc_id }}/reject"><input type="hidden" name="note" value="Descartada en revisión">
+        <form method="post" action="{{ doc_url(doc.doc_id, 'reject') }}"><input type="hidden" name="note" value="Descartada en revisión">
           <button class="btn">Descartar</button></form>
       </div>
     </section>

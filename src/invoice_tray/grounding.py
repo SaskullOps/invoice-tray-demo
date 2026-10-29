@@ -204,6 +204,13 @@ def _ground_code(field: QText, text: str, strip_country: bool = False) -> Ground
     return grounded
 
 
+def _ground_date(field: QText, text: str) -> Grounded:
+    grounded = _ground(field, text, _supports_date)
+    if grounded.ok:
+        grounded.value = date.fromisoformat(str(grounded.value)).isoformat()
+    return grounded
+
+
 def _ground_line(line: LineItemRaw, text: str) -> GroundedLine:
     span = find_span(text, line.quote or "")
     status = Status.VERIFIED
@@ -251,8 +258,8 @@ def ground(raw: RawExtraction, text: str) -> GroundedDoc:
         supplier_name=_ground(raw.supplier_name, text, _supports_text),
         supplier_tax_id=_ground_code(raw.supplier_tax_id, text, strip_country=True),
         invoice_number=_ground(raw.invoice_number, text, _supports_code),
-        issue_date=_ground(raw.issue_date, text, _supports_date),
-        due_date=_ground(raw.due_date, text, _supports_date),
+        issue_date=_ground_date(raw.issue_date, text),
+        due_date=_ground_date(raw.due_date, text),
         vat_lines=vat_lines,
         irpf_rate=_ground(raw.irpf_rate, text, _supports_number),
         irpf_amount=_ground(raw.irpf_amount, text, _supports_number),

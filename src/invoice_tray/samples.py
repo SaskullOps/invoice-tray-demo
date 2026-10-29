@@ -1,8 +1,10 @@
 """Synthetic Spanish supplier invoices and delivery notes, rendered as text-layer PDFs.
 
 Every company, person, tax id and IBAN here is invented. Tax ids and IBANs are generated
-so they pass the official check-digit algorithms (or deliberately fail them), using the
-unassigned province prefix "00" for CIFs and the bank code 9999 for IBANs.
+so they pass the official check-digit algorithms (or deliberately fail them). CIFs use the
+prefix "00", which is not used for regular provincial registrations; the only NIE is the
+all-zero X0000000T; IBANs use bank code 9999, which is not a bank code in common use. The
+values are for testing only.
 """
 
 from __future__ import annotations
@@ -102,7 +104,7 @@ ALIMENTACION = Party(
 )
 TRADUCCIONES = Party(
     "Ana Prueba Ficticia (Traducciones)",
-    make_nie("Y", "0012345"),
+    make_nie("X", "0000000"),
     "Plaza Imaginaria 3",
     "28000 Madrid",
 )

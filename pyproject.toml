@@ -19,7 +19,6 @@ dependencies = [
 
 [project.scripts]
 invoice-tray = "invoice_tray.cli:main"
-demo = "invoice_tray.cli:demo"
 
 [dependency-groups]
 dev = [

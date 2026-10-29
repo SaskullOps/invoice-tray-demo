@@ -12,13 +12,17 @@ All notable changes to this project are documented here. The format follows
 - 11 synthetic Spanish supplier invoices and delivery notes, with a `manifest.json` of
   expected outcomes.
 - Extraction with a local model through Ollama's native `/api/chat`, or any
-  OpenAI-compatible endpoint. Every field carries a verbatim quote that code checks against
-  the document text.
+  OpenAI-compatible endpoint set with `INVOICE_TRAY_BASE_URL` and `INVOICE_TRAY_API_KEY`.
+  Every field carries a verbatim quote that code checks against the document text.
 - Deterministic checks for NIF/NIE/CIF, VAT per rate, IRPF, total, line sum, IBAN mod-97,
-  duplicates, document type and embedded instructions.
-- ERP import file `out/ready.csv` and review queue `out/exceptions.json`.
+  IBAN count and position, duplicates, document type, spreadsheet formulas and a short list
+  of instruction phrases.
+- ERP import file `out/ready.csv` and review queue `out/exceptions.json`. Text cells that a
+  spreadsheet would run as a formula are written with a leading `'`.
 - Local review UI (in Spanish) to approve, fix or discard a document. A fix goes through the
-  same checks again.
+  same checks again, and a value it cannot read is reported instead of ignored. The UI
+  answers only to loopback host names, refuses cross-origin POSTs and loads nothing from
+  other sites.
 - Recorded `qwen3:14b` answers, so the tests and `--fake-llm` run without a model.
 
 [0.1.0]: https://github.com/SaskullOps/invoice-tray-demo/releases/tag/v0.1.0

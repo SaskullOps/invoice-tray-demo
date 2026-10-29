@@ -40,7 +40,8 @@ def test_invalid_tax_ids(value):
 def test_generators_produce_valid_ids():
     assert validate_tax_id(make_cif("B", "0012345")).valid
     assert validate_tax_id(make_nif("00123456")).valid
-    assert validate_tax_id(make_nie("Y", "0012345")).valid
+    assert make_nie("X", "0000000") == "X0000000T"
+    assert validate_tax_id(make_nie("X", "0000000")).valid
 
 
 def test_reason_is_spanish_and_mentions_digit():

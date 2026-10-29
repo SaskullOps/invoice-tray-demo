@@ -3,9 +3,11 @@ from pathlib import Path
 import pytest
 
 from invoice_tray.iban import format_iban
+from invoice_tray.llm import FakeLLM
 from invoice_tray.money import format_es
 from invoice_tray.pdftext import extract_text
-from invoice_tray.samples import SampleDoc, build_samples, generate
+from invoice_tray.pipeline import evaluate, extract_folder, save_extracted, write_outputs
+from invoice_tray.samples import SampleDoc, build_samples, generate, render_pdf
 from invoice_tray.schema import LineItemRaw, QNumber, QText, RawExtraction, VatLineRaw
 
 
@@ -89,4 +91,26 @@ def corpus(samples_dir) -> dict[str, tuple[SampleDoc, str]]:
     }
 
 
-__all__ = ["format_es", "oracle"]
+def base_sample(sample_id_prefix: str) -> SampleDoc:
+    return next(doc for doc in build_samples() if doc.sample_id.startswith(sample_id_prefix))
+
+
+def process_variant(tmp_path: Path, doc: SampleDoc, edit=None, review=None):
+    """Render one sample, answer with the oracle (optionally edited), run the whole pipeline."""
+    samples, recordings, out = tmp_path / "samples", tmp_path / "recordings", tmp_path / "out"
+    samples.mkdir(exist_ok=True)
+    recordings.mkdir(exist_ok=True)
+    render_pdf(doc, samples / doc.filename)
+    text = extract_text(samples / doc.filename)
+    raw = oracle(doc, text)
+    if edit:
+        edit(raw, text)
+    (recordings / f"{doc.sample_id}.json").write_text(raw.model_dump_json(), encoding="utf-8")
+    results = extract_folder(samples, FakeLLM(recordings))
+    save_extracted(results, out / "extracted.json")
+    evaluated = evaluate(results, review or {})
+    write_outputs(evaluated, out)
+    return next(item for item in evaluated if item.doc_id == doc.sample_id), out, samples
+
+
+__all__ = ["format_es", "oracle", "base_sample", "process_variant"]

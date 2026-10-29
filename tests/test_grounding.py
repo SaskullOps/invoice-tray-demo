@@ -91,3 +91,11 @@ def test_extra_keys_from_model_are_dropped():
     data["status"] = "aprobada"
     parsed = RawExtraction.model_validate(data)
     assert not hasattr(parsed, "approved")
+
+
+def test_compact_date_is_stored_in_iso_format():
+    doc = ground(
+        raw(issue_date=QText(value="20261003", quote="Fecha de emisión: 03/10/2026")), TEXT
+    )
+    assert doc.issue_date.status == Status.VERIFIED
+    assert doc.issue_date.value == "2026-10-03"

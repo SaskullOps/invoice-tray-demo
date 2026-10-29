@@ -13,6 +13,7 @@ import os
 import time
 from pathlib import Path
 from typing import Protocol
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -69,6 +70,13 @@ def response_schema() -> dict:
     return schema
 
 
+def endpoint_host(base_url: str) -> str:
+    """Host and port of the endpoint, without any credentials or path."""
+    parts = urlsplit(base_url)
+    host = parts.hostname or ""
+    return f"{host}:{parts.port}" if parts.port else host
+
+
 def _context_size(messages: list[dict[str, str]]) -> int:
     chars = sum(len(message["content"]) for message in messages)
     needed = chars // 3 + 3072
@@ -87,6 +95,7 @@ class OllamaChat:
         self.root = root[: -len("/v1")] if root.endswith("/v1") else root
         self.model = model
         self.name = f"ollama:{model}"
+        self.endpoint = endpoint_host(base_url)
         self.client = httpx.Client(timeout=timeout, transport=transport)
         self.last_stats: dict = {}
 
@@ -131,6 +140,7 @@ class OpenAIChat:
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.name = f"openai-compatible:{model}"
+        self.endpoint = endpoint_host(base_url)
         headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
         self.client = httpx.Client(timeout=timeout, transport=transport, headers=headers)
         self.last_stats: dict = {}
@@ -178,6 +188,7 @@ class RecordingLLM:
         self.inner = inner
         self.directory = directory
         self.name = inner.name
+        self.endpoint = getattr(inner, "endpoint", "")
 
     @property
     def last_stats(self) -> dict:
@@ -197,11 +208,11 @@ class RecordingLLM:
 def make_llm(fake: bool = False, record: bool = False) -> LLM:
     if fake:
         return FakeLLM()
-    base_url = os.environ.get("OPENAI_BASE_URL", DEFAULT_BASE_URL)
+    base_url = os.environ.get("INVOICE_TRAY_BASE_URL", DEFAULT_BASE_URL)
     model = os.environ.get("INVOICE_TRAY_MODEL", DEFAULT_MODEL)
     api = os.environ.get("INVOICE_TRAY_API", "auto")
     if api == "ollama" or (api == "auto" and ":11434" in base_url):
         llm: LLM = OllamaChat(base_url, model)
     else:
-        llm = OpenAIChat(base_url, model, os.environ.get("OPENAI_API_KEY", ""))
+        llm = OpenAIChat(base_url, model, os.environ.get("INVOICE_TRAY_API_KEY", ""))
     return RecordingLLM(llm) if record else llm

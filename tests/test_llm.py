@@ -3,7 +3,7 @@ import json
 import httpx
 import pytest
 
-from invoice_tray.llm import FakeLLM, OllamaChat, OpenAIChat, build_messages
+from invoice_tray.llm import FakeLLM, OllamaChat, OpenAIChat, build_messages, make_llm
 
 
 def test_document_is_delimited_and_marked_untrusted():
@@ -70,3 +70,25 @@ def test_fake_llm_replays_recordings(tmp_path):
     assert json.loads(FakeLLM(tmp_path).extract("doc-1", "irrelevant"))["total"]["value"] == 1
     with pytest.raises(FileNotFoundError):
         FakeLLM(tmp_path).extract("missing", "")
+
+
+def test_endpoint_comes_only_from_invoice_tray_variables(monkeypatch):
+    monkeypatch.setenv("INVOICE_TRAY_BASE_URL", "http://example.test:9000/v1")
+    monkeypatch.setenv("INVOICE_TRAY_API_KEY", "tray-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "http://other.test/v1")
+    monkeypatch.setenv("OPENAI_API_KEY", "other-key")
+    llm = make_llm()
+    assert isinstance(llm, OpenAIChat)
+    assert llm.base_url == "http://example.test:9000/v1"
+    assert llm.endpoint == "example.test:9000"
+    assert llm.client.headers["Authorization"] == "Bearer tray-key"
+
+
+def test_openai_variables_alone_are_ignored(monkeypatch):
+    monkeypatch.delenv("INVOICE_TRAY_BASE_URL", raising=False)
+    monkeypatch.delenv("INVOICE_TRAY_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_BASE_URL", "http://other.test/v1")
+    monkeypatch.setenv("OPENAI_API_KEY", "other-key")
+    llm = make_llm()
+    assert isinstance(llm, OllamaChat)
+    assert llm.endpoint == "localhost:11434"

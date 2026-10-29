@@ -11,6 +11,7 @@ from .llm import make_llm
 from .samples import generate
 
 STATE_FILE = "extracted.json"
+LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
 REVIEW_FILE = "review.json"
 
 
@@ -22,7 +23,8 @@ def cmd_generate(args: argparse.Namespace) -> None:
 def cmd_process(args: argparse.Namespace) -> None:
     llm = make_llm(fake=args.fake_llm, record=args.record)
     out = Path(args.out)
-    print(f"Modelo: {llm.name}")
+    endpoint = getattr(llm, "endpoint", "")
+    print(f"Modelo: {llm.name}" + (f" en {endpoint}" if endpoint else ""))
 
     def progress(result: pipeline.Extracted) -> None:
         state = "error" if result.error else "ok"
@@ -45,7 +47,13 @@ def cmd_serve(args: argparse.Namespace) -> None:
 
     from .web import create_app
 
-    app = create_app(Path(args.out), Path(args.samples))
+    app = create_app(Path(args.out), Path(args.samples), host=args.host)
+    if args.host not in LOOPBACK_HOSTS:
+        print(
+            f"AVISO: la bandeja no tiene usuario ni contraseña y {args.host} no es una dirección "
+            "local. Cualquiera que llegue a este puerto puede aprobar facturas.",
+            file=sys.stderr,
+        )
     print(f"Bandeja de revisión en http://{args.host}:{args.port}")
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
 
@@ -101,7 +109,3 @@ def cmd_demo(args: argparse.Namespace) -> None:
 def main(argv: list[str] | None = None) -> None:
     args = _parser().parse_args(argv)
     args.func(args)
-
-
-def demo() -> None:
-    main(["demo", *sys.argv[1:]])

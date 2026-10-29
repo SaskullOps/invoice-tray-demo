@@ -7,8 +7,9 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
+from .export import looks_like_formula
 from .grounding import Grounded, GroundedDoc, Status, _alnum, normalize
-from .iban import normalize_iban, validate_iban
+from .iban import validate_iban
 from .money import CENT, cents, format_es, to_decimal
 from .taxid import validate_tax_id
 
@@ -46,7 +47,19 @@ INJECTION_PATTERNS = [
     r"system prompt",
 ]
 
-IBAN_IN_TEXT = re.compile(r"\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){4,7}(?:\s?[A-Z0-9]{1,4})?\b")
+IBAN_IN_TEXT = re.compile(
+    r"\b[A-Z]{2}\d{2}(?:[\s.\-]?[A-Z0-9]{4}){4,7}(?:[\s.\-]?[A-Z0-9]{1,4})?\b"
+)
+IBAN_LINE_LABELS = ("iban", "cuenta")
+NOTES_HEADING = "observaciones"
+EXPORTED_TEXT_FIELDS = (
+    "supplier_name",
+    "supplier_tax_id",
+    "invoice_number",
+    "issue_date",
+    "due_date",
+    "iban",
+)
 
 
 def field_label(key: str) -> str:
@@ -92,8 +105,8 @@ def duplicate_key(doc: GroundedDoc) -> tuple[str, str] | None:
 
 
 def ibans_in_text(text: str) -> set[str]:
-    flattened = re.sub(r"\s*\n\s*", " ", text.upper())
-    return {normalize_iban(match) for match in IBAN_IN_TEXT.findall(flattened)}
+    flattened = re.sub(r"\s+", " ", text.upper())
+    return {re.sub(r"[\s.\-]", "", match) for match in IBAN_IN_TEXT.findall(flattened)}
 
 
 def run_checks(
@@ -146,6 +159,7 @@ def run_checks(
     checks.extend(_vat_checks(doc))
     checks.extend(_iban_checks(doc, text))
     checks.extend(_injection_checks(text))
+    checks.extend(_formula_checks(doc, doc_id))
 
     key = duplicate_key(doc)
     if key is not None and detected != "albaran":
@@ -253,6 +267,7 @@ def _iban_checks(doc: GroundedDoc, text: str) -> list[Check]:
             checks.append(_fail("iban_invalid", f"{result.value}: {result.reason}"))
     elif detect_document_type(text) == "factura":
         checks.append(_fail("iban_missing", "Sin IBAN: confirmar forma de pago", blocking=False))
+    checks.extend(_iban_location_checks(doc.iban, text))
     found = ibans_in_text(text)
     if len(found) > 1:
         checks.append(
@@ -262,6 +277,52 @@ def _iban_checks(doc: GroundedDoc, text: str) -> list[Check]:
             )
         )
     return checks
+
+
+def _iban_location_checks(iban: Grounded, text: str) -> list[Check]:
+    """A model-picked IBAN must come from a payment line, not from free text such as a note."""
+    if iban.status != Status.VERIFIED or iban.span is None:
+        return []
+    start, end = iban.span
+    line_start = text.rfind("\n", 0, start) + 1
+    line_end = text.find("\n", end)
+    lines = normalize(text[line_start : line_end if line_end >= 0 else len(text)])
+    if NOTES_HEADING in normalize(text[:start]):
+        return [
+            _fail(
+                "iban_location",
+                "El IBAN extraído aparece después de «Observaciones», no en los datos de pago: "
+                "confirmar la cuenta",
+            )
+        ]
+    if not any(label in lines for label in IBAN_LINE_LABELS):
+        return [
+            _fail(
+                "iban_location",
+                "El IBAN extraído no está en una línea con la etiqueta IBAN o cuenta: "
+                "confirmar la cuenta",
+            )
+        ]
+    return []
+
+
+def _formula_checks(doc: GroundedDoc, doc_id: str) -> list[Check]:
+    fields = [
+        field_label(name)
+        for name in EXPORTED_TEXT_FIELDS
+        if getattr(doc, name).ok and looks_like_formula(str(getattr(doc, name).value))
+    ]
+    if looks_like_formula(doc_id):
+        fields.append("Nombre del archivo")
+    if not fields:
+        return []
+    return [
+        _fail(
+            "csv_formula",
+            "Texto que una hoja de cálculo trataría como fórmula (empieza por =, +, -, @, "
+            "tabulador o retorno de carro) en: " + ", ".join(fields),
+        )
+    ]
 
 
 def _injection_checks(text: str) -> list[Check]:

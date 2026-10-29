@@ -7,8 +7,12 @@ supplier documents as it stands.
 
 - The review UI has no login. It binds to `127.0.0.1` by default; keep it there. Do not run
   it with `--host 0.0.0.0` or put it behind a proxy that other people can reach.
+- Loopback alone does not stop a web page in your browser from sending requests to the UI.
+  The UI answers only to the host names `127.0.0.1`, `localhost` and the `--host` value, and
+  refuses POSTs that the browser does not mark as same-origin. Bypasses of those checks count
+  as security issues.
 - With the default settings, the document text goes only to the local Ollama at
-  `localhost:11434`. If you set `OPENAI_BASE_URL` to a hosted endpoint, the full text of every
+  `localhost:11434`. If you set `INVOICE_TRAY_BASE_URL` to a hosted endpoint, the full text of every
   document is sent to that provider.
 - Text inside a document is treated as untrusted data. The checks that decide whether an
   invoice is booked run in code, and the model's answer cannot approve anything. Bypasses of

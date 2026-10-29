@@ -4,16 +4,26 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .checks import field_label
 from .grounding import STATUS_LABELS_ES, GroundedDoc
 from .money import format_es
-from .pipeline import EDITABLE_FIELDS, Evaluated, Review, evaluate, load_extracted, write_outputs
+from .pipeline import (
+    EDITABLE_FIELDS,
+    Evaluated,
+    Review,
+    evaluate,
+    fix_errors,
+    load_extracted,
+    write_outputs,
+)
 
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
@@ -25,6 +35,31 @@ STATUS_ES = {
 }
 
 AMOUNT_FIELDS = {"total", "irpf_amount"}
+LOOPBACK_HOSTS = ["127.0.0.1", "localhost"]
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+
+def doc_url(doc_id: str, action: str = "") -> str:
+    """Path of a document page or action; the id is a file name, so every character is quoted."""
+    path = f"/doc/{quote(doc_id, safe='')}"
+    return f"{path}/{action}" if action else path
+
+
+def pdf_url(doc_id: str) -> str:
+    return f"/pdf/{quote(doc_id, safe='')}"
+
+
+def is_same_origin(request: Request) -> bool:
+    """Browsers send Sec-Fetch-Site (and Origin) on form posts; a cross-site page cannot fake them.
+
+    Sec-Fetch-Site decides when present. Without it, Origin must equal this server's origin.
+    A request with neither header is refused.
+    """
+    site = request.headers.get("sec-fetch-site")
+    if site is not None:
+        return site in ("same-origin", "none")
+    origin = request.headers.get("origin")
+    return origin == f"{request.url.scheme}://{request.headers.get('host', '')}"
 
 
 def _spans(doc: GroundedDoc) -> list[tuple[str, tuple[int, int]]]:
@@ -96,16 +131,27 @@ class Store:
         write_outputs(self.docs(), self.out_dir)
 
 
-def create_app(out_dir: Path, samples_dir: Path) -> FastAPI:
+def create_app(out_dir: Path, samples_dir: Path, host: str = "127.0.0.1") -> FastAPI:
     app = FastAPI(title="Bandeja de facturas", docs_url=None, redoc_url=None)
     store = Store(out_dir)
+    allowed_hosts = LOOPBACK_HOSTS + ([host] if host not in LOOPBACK_HOSTS else [])
+
+    @app.middleware("http")
+    async def same_origin_posts(request: Request, call_next):
+        if request.method not in SAFE_METHODS and not is_same_origin(request):
+            return PlainTextResponse("Petición rechazada: no viene de esta página", 403)
+        return await call_next(request)
+
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
     env = TEMPLATES.env
     env.globals.update(
         STATUS_ES=STATUS_ES,
         STATUS_LABELS_ES=STATUS_LABELS_ES,
         display=display,
+        doc_url=doc_url,
         field_label=field_label,
         format_es=format_es,
+        pdf_url=pdf_url,
     )
     env.filters["highlight"] = lambda doc: highlight(doc.text, doc.grounded)
 
@@ -118,8 +164,7 @@ def create_app(out_dir: Path, samples_dir: Path) -> FastAPI:
             request, "index.html", {"docs": docs, "counts": counts, "model": model}
         )
 
-    @app.get("/doc/{doc_id}", response_class=HTMLResponse)
-    def detail(request: Request, doc_id: str):
+    def _detail(request: Request, doc_id: str, errors=(), typed=None, status_code: int = 200):
         docs = store.docs()
         doc = store.get(doc_id)
         queue = [d.doc_id for d in docs if d.status == "exception" and d.doc_id != doc_id]
@@ -127,11 +172,22 @@ def create_app(out_dir: Path, samples_dir: Path) -> FastAPI:
         return TEMPLATES.TemplateResponse(
             request,
             "detail.html",
-            {"doc": doc, "editable": EDITABLE_FIELDS, "next_id": following},
+            {
+                "doc": doc,
+                "editable": EDITABLE_FIELDS,
+                "next_id": following,
+                "errors": list(errors),
+                "typed": typed or {},
+            },
+            status_code=status_code,
         )
 
+    @app.get("/doc/{doc_id}", response_class=HTMLResponse)
+    def detail(request: Request, doc_id: str):
+        return _detail(request, doc_id)
+
     def _back(doc_id: str) -> RedirectResponse:
-        return RedirectResponse(f"/doc/{doc_id}", status_code=303)
+        return RedirectResponse(doc_url(doc_id), status_code=303)
 
     @app.post("/doc/{doc_id}/approve")
     async def approve(request: Request, doc_id: str):
@@ -160,6 +216,10 @@ def create_app(out_dir: Path, samples_dir: Path) -> FastAPI:
             for key in keys
             if key in form and str(form[key]).strip() and str(form[key]).strip() != current[key]
         }
+        errors = fix_errors(fields)
+        if errors:
+            typed = {key: str(form[key]) for key in keys if key in form}
+            return _detail(request, doc_id, errors, typed, status_code=400)
         store.decide(doc_id, Review(action="fix", fields=fields, note=str(form.get("note", ""))))
         return _back(doc_id)
 

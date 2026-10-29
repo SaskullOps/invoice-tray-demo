@@ -15,7 +15,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
-from .checks import Check, run_checks
+from .checks import Check, field_label, run_checks
 from .export import write_csv
 from .grounding import Grounded, GroundedDoc, Status, _alnum, ground
 from .llm import LLM
@@ -73,7 +73,8 @@ def extract_one(path: Path, llm: LLM, attempts: int = 2) -> Extracted:
     for _ in range(attempts):
         try:
             raw = RawExtraction.model_validate_json(llm.extract(doc_id, text))
-        except (ValidationError, ValueError) as exc:
+            grounded = ground(raw, text)
+        except (ValidationError, ValueError, ArithmeticError) as exc:
             error = f"Respuesta del modelo no válida: {exc.__class__.__name__}"
             continue
         except Exception as exc:  # noqa: BLE001 - surface any transport failure as an exception item
@@ -84,7 +85,7 @@ def extract_one(path: Path, llm: LLM, attempts: int = 2) -> Extracted:
             file=path.name,
             text=text,
             model=llm.name,
-            grounded=ground(raw, text),
+            grounded=grounded,
             seconds=round(time.monotonic() - started, 1),
             stats=getattr(llm, "last_stats", {}) or {},
         )
@@ -126,6 +127,30 @@ def _parse_fix(name: str, value: str) -> str | float | None:
     if name in CODE_FIELDS:
         return _alnum(value)
     return value
+
+
+def fix_errors(fields: dict[str, str]) -> list[str]:
+    """Spanish messages for every typed value the fix form cannot read; empty when all parse."""
+    errors = []
+    for name, raw_value in fields.items():
+        if not raw_value.strip():
+            continue
+        try:
+            value = _parse_fix(name, raw_value)
+        except ValueError:
+            value = None
+        if value is not None and value != "":
+            continue
+        if name in DATE_FIELDS:
+            problem = "no es una fecha válida (dd/mm/aaaa)"
+        elif name in CODE_FIELDS:
+            problem = "no tiene letras ni números"
+        elif name in NUMERIC_FIELDS or name.startswith(("base_", "vat_")):
+            problem = "no es un importe válido"
+        else:
+            problem = "no es un valor válido"
+        errors.append(f"{field_label(name)}: «{raw_value.strip()}» {problem}")
+    return errors
 
 
 def apply_fix(doc: GroundedDoc, fields: dict[str, str]) -> GroundedDoc:

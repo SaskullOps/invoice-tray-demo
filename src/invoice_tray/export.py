@@ -36,6 +36,27 @@ CSV_COLUMNS = [
     "source_file",
 ]
 
+TEXT_COLUMNS = {
+    "document_id",
+    "supplier_tax_id",
+    "supplier_name",
+    "invoice_number",
+    "issue_date",
+    "due_date",
+    "iban",
+    "source_file",
+}
+FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
+
+
+def looks_like_formula(value: str) -> bool:
+    """Spreadsheets run a cell that starts with one of these characters as a formula."""
+    return value.startswith(FORMULA_START)
+
+
+def _neutralise(column: str, value: str) -> str:
+    return f"'{value}" if column in TEXT_COLUMNS and looks_like_formula(value) else value
+
 
 def _money(value: Decimal | None) -> str:
     return f"{cents(value):.2f}" if value is not None else ""
@@ -78,7 +99,7 @@ def to_row(doc: Evaluated) -> dict[str, str]:
         )
         row[f"base_{key}"] = _money(buckets[key]) if has else ""
         row[f"vat_{key}"] = _money(vat_buckets[key]) if has else ""
-    return {column: row[column] for column in CSV_COLUMNS}
+    return {column: _neutralise(column, row[column]) for column in CSV_COLUMNS}
 
 
 def write_csv(docs: list[Evaluated], path: Path) -> None:
