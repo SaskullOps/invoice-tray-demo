@@ -1,0 +1,71 @@
+{
+  "document_type": {
+    "value": "factura",
+    "quote": "FACTURA"
+  },
+  "supplier_name": {
+    "value": "Ana Prueba Ficticia (Traducciones)",
+    "quote": "Ana Prueba Ficticia (Traducciones)"
+  },
+  "supplier_tax_id": {
+    "value": "Y0012345P",
+    "quote": "NIF: Y0012345P"
+  },
+  "invoice_number": {
+    "value": "2026-027",
+    "quote": "Nº factura: 2026-027"
+  },
+  "issue_date": {
+    "value": "2026-10-10",
+    "quote": "Fecha de emisión: 10/10/2026"
+  },
+  "due_date": {
+    "value": "2026-11-09",
+    "quote": "Vencimiento: 09/11/2026"
+  },
+  "vat_lines": [
+    {
+      "rate": 21,
+      "base": {
+        "value": 498,
+        "quote": "Base imponible 21 %:   498,00 €"
+      },
+      "vat": {
+        "value": 104.58,
+        "quote": "Cuota IVA 21 %:   104,58 €"
+      }
+    }
+  ],
+  "irpf_rate": {
+    "value": 15,
+    "quote": "Retención IRPF 15 %:   -74,70 €"
+  },
+  "irpf_amount": {
+    "value": 74.7,
+    "quote": "Retención IRPF 15 %:   -74,70 €"
+  },
+  "total": {
+    "value": 527.88,
+    "quote": "TOTAL FACTURA:   527,88 €"
+  },
+  "iban": {
+    "value": "ES8899990004894567890123",
+    "quote": "IBAN: ES88 9999 0004 8945 6789 0123"
+  },
+  "line_items": [
+    {
+      "description": "Traducción técnica ES>EN (palabras)",
+      "quantity": 3200,
+      "unit_price": 0.09,
+      "amount": 288,
+      "quote": " Traducción técnica ES>EN (palabras)   3.200   0,09   21 %   288,00 €"
+    },
+    {
+      "description": "Revisión de manual de usuario (horas)",
+      "quantity": 6,
+      "unit_price": 35,
+      "amount": 210,
+      "quote": " Revisión de manual de usuario (horas)   6   35,00   21 %   210,00 €"
+    }
+  ]
+}

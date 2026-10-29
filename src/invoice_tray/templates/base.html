@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Bandeja de facturas{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F5F5F3; --card: #FFFFFF; --ink: #17181A; --muted: #6B6F76; --line: #E4E4E1;
+  --accent: #FF5B1F; --accent-tint: #FFE8DE; --ok: #1F7A4D; --ok-tint: #E3F2EA;
+  --sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 32px; border-bottom: 1px solid var(--line); background: var(--card); }
+.brand { font-weight: 600; letter-spacing: -0.01em; text-decoration: none; display: flex; gap: 10px; align-items: center; }
+.brand::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--accent); }
+.meta { color: var(--muted); font-size: 13px; }
+main { max-width: 1240px; margin: 0 auto; padding: 32px; }
+h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px; }
+h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 12px; }
+.sub { color: var(--muted); margin: 0 0 28px; }
+.btn { font: 500 14px var(--sans); border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  padding: 8px 14px; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-block; }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(0.95); }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.pill.ready::before { background: var(--ok); }
+.pill.exception { color: var(--accent); }
+.pill.exception::before { background: var(--accent); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+@media (max-width: 760px) { main { padding: 16px; } .top { padding: 14px 16px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">Bandeja de facturas</a>
+  <span class="meta">Demo con datos ficticios · solo recepción y contabilización, nunca emite facturas</span>
+</header>
+<main>{% block body %}{% endblock %}</main>
+</body>
+</html>

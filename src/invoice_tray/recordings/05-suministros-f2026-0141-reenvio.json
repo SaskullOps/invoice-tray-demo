@@ -1,0 +1,85 @@
+{
+  "document_type": {
+    "value": "factura",
+    "quote": "FACTURA"
+  },
+  "supplier_name": {
+    "value": "Suministros Ejemplo SL",
+    "quote": "Suministros Ejemplo SL"
+  },
+  "supplier_tax_id": {
+    "value": "B00123455",
+    "quote": "NIF: B00123455"
+  },
+  "invoice_number": {
+    "value": "F-2026-0141",
+    "quote": "Nº factura: F-2026-0141"
+  },
+  "issue_date": {
+    "value": "2026-10-03",
+    "quote": "Fecha de emisión: 03/10/2026"
+  },
+  "due_date": {
+    "value": "2026-11-02",
+    "quote": "Vencimiento: 02/11/2026"
+  },
+  "vat_lines": [
+    {
+      "rate": 21,
+      "base": {
+        "value": 186.1,
+        "quote": "Base imponible 21 %:   186,10 €"
+      },
+      "vat": {
+        "value": 39.08,
+        "quote": "Cuota IVA 21 %:   39,08 €"
+      }
+    }
+  ],
+  "irpf_rate": {
+    "value": null,
+    "quote": null
+  },
+  "irpf_amount": {
+    "value": null,
+    "quote": null
+  },
+  "total": {
+    "value": 225.18,
+    "quote": "TOTAL FACTURA:   225,18 €"
+  },
+  "iban": {
+    "value": "ES8899990001461234567890",
+    "quote": "IBAN: ES88 9999 0001 4612 3456 7890"
+  },
+  "line_items": [
+    {
+      "description": "Tornillo inox M6x30 (caja 100 uds)",
+      "quantity": 4,
+      "unit_price": 12.5,
+      "amount": 50,
+      "quote": " Tornillo inox M6x30 (caja 100 uds)   4   12,50   21 %   50,00 €"
+    },
+    {
+      "description": "Taco nylon 8 mm (caja 200 uds)",
+      "quantity": 6,
+      "unit_price": 8.75,
+      "amount": 52.5,
+      "quote": " Taco nylon 8 mm (caja 200 uds)   6   8,75   21 %   52,50 €"
+    },
+    {
+      "description": "Broca HSS 6 mm",
+      "quantity": 10,
+      "unit_price": 3.2,
+      "amount": 32,
+      "quote": " Broca HSS 6 mm   10   3,20   21 %   32,00 €"
+    },
+    {
+      "description": "Guantes de trabajo talla L (par)",
+      "quantity": 24,
+      "unit_price": 2.15,
+      "amount": 51.6,
+      "quote": " Guantes de trabajo talla L (par)   24   2,15   21 %   51,60 €"
+    }
+  ]
+}

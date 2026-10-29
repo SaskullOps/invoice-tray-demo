@@ -1,0 +1,78 @@
+{
+  "document_type": {
+    "value": "factura",
+    "quote": "FACTURA"
+  },
+  "supplier_name": {
+    "value": "Material de Oficina Ejemplo SL",
+    "quote": "Material de Oficina Ejemplo SL"
+  },
+  "supplier_tax_id": {
+    "value": "B00334425",
+    "quote": "NIF: B00334425"
+  },
+  "invoice_number": {
+    "value": "2026-0412",
+    "quote": "Nº factura: 2026-0412"
+  },
+  "issue_date": {
+    "value": "2026-10-13",
+    "quote": "Fecha de emisión: 13/10/2026"
+  },
+  "due_date": {
+    "value": "2026-11-12",
+    "quote": "Vencimiento: 12/11/2026"
+  },
+  "vat_lines": [
+    {
+      "rate": 21,
+      "base": {
+        "value": 411.0,
+        "quote": "Base imponible 21 %:   411,00 €"
+      },
+      "vat": {
+        "value": 97.58,
+        "quote": "Cuota IVA 21 %:   97,58 €"
+      }
+    }
+  ],
+  "irpf_rate": {
+    "value": null,
+    "quote": null
+  },
+  "irpf_amount": {
+    "value": null,
+    "quote": null
+  },
+  "total": {
+    "value": 508.58,
+    "quote": "TOTAL FACTURA:   508,58 €"
+  },
+  "iban": {
+    "value": "ES6099990006756789012345",
+    "quote": "IBAN: ES60 9999 0006 7567 8901 2345"
+  },
+  "line_items": [
+    {
+      "description": "Papel A4 80 g (caja 5 paquetes)",
+      "quantity": 10,
+      "unit_price": 21.9,
+      "amount": 219.0,
+      "quote": " Papel A4 80 g (caja 5 paquetes)   10   21,90   21 %   219,00 €"
+    },
+    {
+      "description": "Tóner compatible negro",
+      "quantity": 3,
+      "unit_price": 48.0,
+      "amount": 144.0,
+      "quote": " Tóner compatible negro   3   48,00   21 %   144,00 €"
+    },
+    {
+      "description": "Archivador de palanca",
+      "quantity": 20,
+      "unit_price": 2.4,
+      "amount": 48.0,
+      "quote": " Archivador de palanca   20   2,40   21 %   48,00 €"
+    }
+  ]
+}

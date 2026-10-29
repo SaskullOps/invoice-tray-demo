@@ -1,0 +1,96 @@
+{
+  "document_type": {
+    "value": "factura",
+    "quote": "FACTURA"
+  },
+  "supplier_name": {
+    "value": "Alimentación Demo SL",
+    "quote": "Alimentación Demo SL"
+  },
+  "supplier_tax_id": {
+    "value": "B00778811",
+    "quote": "NIF: B00778811"
+  },
+  "invoice_number": {
+    "value": "FA-2026-118",
+    "quote": "Nº factura: FA-2026-118"
+  },
+  "issue_date": {
+    "value": "2026-10-08",
+    "quote": "Fecha de emisión: 08/10/2026"
+  },
+  "due_date": {
+    "value": "2026-11-07",
+    "quote": "Vencimiento: 07/11/2026"
+  },
+  "vat_lines": [
+    {
+      "rate": 10,
+      "base": {
+        "value": 57.6,
+        "quote": "Base imponible 10 %:   57,60 €"
+      },
+      "vat": {
+        "value": 5.76,
+        "quote": "Cuota IVA 10 %:   5,76 €"
+      }
+    },
+    {
+      "rate": 4,
+      "base": {
+        "value": 261,
+        "quote": "Base imponible 4 %:   261,00 €"
+      },
+      "vat": {
+        "value": 10.44,
+        "quote": "Cuota IVA 4 %:   10,44 €"
+      }
+    }
+  ],
+  "irpf_rate": {
+    "value": null,
+    "quote": null
+  },
+  "irpf_amount": {
+    "value": null,
+    "quote": null
+  },
+  "total": {
+    "value": 334.8,
+    "quote": "TOTAL FACTURA:   334,80 €"
+  },
+  "iban": {
+    "value": "ES0499990003373456789012",
+    "quote": "IBAN: ES04 9999 0003 3734 5678 9012"
+  },
+  "line_items": [
+    {
+      "description": "Pan de molde integral",
+      "quantity": 40,
+      "unit_price": 1.85,
+      "amount": 74,
+      "quote": " Pan de molde integral   40   1,85   4 %   74,00 €"
+    },
+    {
+      "description": "Leche entera 1 L",
+      "quantity": 60,
+      "unit_price": 0.95,
+      "amount": 57,
+      "quote": " Leche entera 1 L   60   0,95   4 %   57,00 €"
+    },
+    {
+      "description": "Aceite de oliva virgen extra 5 L",
+      "quantity": 4,
+      "unit_price": 32.5,
+      "amount": 130,
+      "quote": " Aceite de oliva virgen extra 5 L   4   32,50   4 %   130,00 €"
+    },
+    {
+      "description": "Zumo de naranja 1 L",
+      "quantity": 36,
+      "unit_price": 1.6,
+      "amount": 57.6,
+      "quote": " Zumo de naranja 1 L   36   1,60   10 %   57,60 €"
+    }
+  ]
+}

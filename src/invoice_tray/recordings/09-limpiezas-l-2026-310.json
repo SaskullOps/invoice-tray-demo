@@ -1,0 +1,71 @@
+{
+  "document_type": {
+    "value": "factura",
+    "quote": "FACTURA"
+  },
+  "supplier_name": {
+    "value": "Limpiezas Ejemplo SL",
+    "quote": "Limpiezas Ejemplo SL"
+  },
+  "supplier_tax_id": {
+    "value": "B00456129",
+    "quote": "NIF: B00456129"
+  },
+  "invoice_number": {
+    "value": "L-2026-310",
+    "quote": "Nº factura: L-2026-310"
+  },
+  "issue_date": {
+    "value": "2026-10-20",
+    "quote": "Fecha de emisión: 20/10/2026"
+  },
+  "due_date": {
+    "value": "2026-11-19",
+    "quote": "Vencimiento: 19/11/2026"
+  },
+  "vat_lines": [
+    {
+      "rate": 21,
+      "base": {
+        "value": 456.5,
+        "quote": "Base imponible 21 %:   456,50 €"
+      },
+      "vat": {
+        "value": 95.87,
+        "quote": "Cuota IVA 21 %:   95,87 €"
+      }
+    }
+  ],
+  "irpf_rate": {
+    "value": null,
+    "quote": null
+  },
+  "irpf_amount": {
+    "value": null,
+    "quote": null
+  },
+  "total": {
+    "value": 552.37,
+    "quote": "TOTAL FACTURA:   552,37 €"
+  },
+  "iban": {
+    "value": "ES2199990008608888888889",
+    "quote": "IBAN: ES21 9999 0008 6088 8888 8889"
+  },
+  "line_items": [
+    {
+      "description": "Servicio de limpieza de oficinas (octubre)",
+      "quantity": 1,
+      "unit_price": 420,
+      "amount": 420,
+      "quote": " Servicio de limpieza de oficinas (octubre)   1   420,00   21 %   420,00 €"
+    },
+    {
+      "description": "Productos de limpieza",
+      "quantity": 1,
+      "unit_price": 36.5,
+      "amount": 36.5,
+      "quote": " Productos de limpieza   1   36,50   21 %   36,50 €"
+    }
+  ]
+}

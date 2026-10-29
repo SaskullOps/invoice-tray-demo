@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.doc_id }} · Bandeja de facturas{% endblock %}
+{% block head %}
+<style>
+.crumbs { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 20px; font-size: 14px; }
+.crumbs a { color: var(--muted); text-decoration: none; }
+.crumbs a:hover { color: var(--ink); }
+.title { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+.doc { padding: 24px; position: sticky; top: 16px; }
+.doc pre { margin: 0; font: 12px/1.75 var(--mono); white-space: pre-wrap; word-break: break-word; color: #3A3C40; }
+mark { background: var(--accent-tint); color: var(--ink); border-radius: 3px; padding: 1px 0;
+  box-shadow: inset 0 -2px 0 var(--accent); transition: background 120ms; }
+mark.on { background: var(--accent); color: #fff; }
+.doc-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.doc-head a { font-size: 13px; color: var(--muted); }
+section.card { padding: 20px 22px; margin-bottom: 20px; }
+.fields { width: 100%; border-collapse: collapse; }
+.fields td { padding: 9px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.fields tr:first-child td { border-top: 0; }
+.fields .k { color: var(--muted); width: 34%; font-size: 14px; padding-right: 12px; }
+.fields .v { font-weight: 500; }
+.fields .q { display: block; font: 12px/1.5 var(--mono); color: var(--muted); margin-top: 2px; }
+.fields tr[data-key] { cursor: default; }
+.fields tr.on .v { color: var(--accent); }
+.st { font-size: 12px; width: 120px; text-align: right; padding-left: 8px; color: var(--ok); }
+.st.bad { color: var(--accent); }
+.claimed { text-decoration: line-through; color: var(--muted); font-weight: 400; }
+.checks { list-style: none; margin: 0; padding: 0; }
+.checks li { display: grid; grid-template-columns: 22px 1fr; padding: 6px 0; font-size: 14px; }
+.checks .i { font-weight: 600; color: var(--ok); }
+.checks .bad .i { color: var(--accent); }
+.checks .warn .i { color: var(--muted); }
+.checks .bad { font-weight: 500; }
+form.fix label { display: grid; grid-template-columns: 34% 1fr; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 14px; color: var(--muted); }
+input[type=text] { font: 14px var(--sans); padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; width: 100%; background: #fff; color: var(--ink); }
+input[type=text]:focus { border-color: var(--accent); outline: none; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.banner { padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; }
+.banner.ready { background: var(--ok-tint); color: var(--ok); }
+.banner.exception { background: var(--accent-tint); color: #8A2E0A; }
+.banner.archived, .banner.rejected { background: #ECECEA; color: var(--muted); }
+details summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+</style>
+{% endblock %}
+{% block body %}
+{% set g = doc.grounded %}
+<nav class="crumbs">
+  <a href="/">← Todas las facturas</a>
+  {% if next_id %}<a href="/doc/{{ next_id }}">Siguiente a revisar →</a>{% endif %}
+</nav>
+<div class="title">
+  <h1>{{ g.supplier_name.value if g and g.supplier_name.value else doc.file }}</h1>
+  <span class="pill {{ doc.status }}">{{ STATUS_ES[doc.status] }}</span>
+  <span class="meta">Confianza {{ doc.confidence }}{% if doc.seconds %} · {{ doc.seconds }} s{% endif %}</span>
+</div>
+<div class="grid">
+  <div class="card doc">
+    <div class="doc-head"><h2>Texto del documento</h2><a href="/pdf/{{ doc.doc_id }}" target="_blank">Ver PDF original</a></div>
+    <pre>{{ doc|highlight }}</pre>
+  </div>
+  <div>
+    {% if doc.status == "exception" %}
+      <div class="banner exception">Necesita una persona: {{ doc.reasons|map(attribute="message")|join(" · ") }}</div>
+    {% elif doc.status == "ready" %}
+      <div class="banner ready">Lista para el ERP{% if doc.review %} tras revisión{% if doc.review.note %}: {{ doc.review.note }}{% endif %}{% endif %}.</div>
+    {% else %}
+      <div class="banner {{ doc.status }}">{{ STATUS_ES[doc.status] }}{% if doc.review and doc.review.note %}: {{ doc.review.note }}{% endif %}. No se exporta al ERP.</div>
+    {% endif %}
+
+    <section class="card">
+      <h2>Datos extraídos</h2>
+      {% if g %}
+      <table class="fields">
+        {% for key, f in g.all_grounded() %}
+          {% if f.status != "missing" or key in ["supplier_name","supplier_tax_id","invoice_number","issue_date","total"] %}
+          <tr data-key="{{ key }}">
+            <td class="k">{{ field_label(key) }}</td>
+            <td class="v">
+              {% if f.ok %}{{ display(key, f.value) }}{% elif f.claimed is not none %}<span class="claimed">{{ f.claimed }}</span>{% else %}—{% endif %}
+              {% if f.quote %}<span class="q">«{{ f.quote }}»</span>{% endif %}
+            </td>
+            <td class="st {{ '' if f.ok else 'bad' }}">{{ STATUS_LABELS_ES[f.status] if f.status != "missing" else "No aparece" }}</td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+      {% if g.line_items %}
+      <details style="margin-top:12px"><summary>{{ g.line_items|length }} líneas de detalle</summary>
+        <table class="fields">
+        {% for line in g.line_items %}
+          <tr data-key="line_{{ loop.index0 }}"><td class="k">{{ line.description or "—" }}</td>
+          <td class="v num">{{ display("total", line.amount) }}</td>
+          <td class="st {{ '' if line.status == 'verified' else 'bad' }}">{{ STATUS_LABELS_ES[line.status] }}</td></tr>
+        {% endfor %}
+        </table>
+      </details>
+      {% endif %}
+      {% else %}
+      <p>{{ doc.error }}</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Comprobaciones</h2>
+      <ul class="checks">
+        {% for c in doc.checks %}
+        <li class="{{ 'ok' if c.ok else ('bad' if c.blocking else 'warn') }}"><span class="i">{{ "✓" if c.ok else ("✕" if c.blocking else "!") }}</span><span>{{ c.message }}</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    {% if doc.review %}
+    <section class="card">
+      <h2>Revisión</h2>
+      <form method="post" action="/doc/{{ doc.doc_id }}/undo"><button class="btn">Deshacer revisión</button></form>
+    </section>
+    {% elif doc.status == "exception" and g %}
+    <section class="card">
+      <h2>Corregir</h2>
+      <form class="fix" method="post" action="/doc/{{ doc.doc_id }}/fix">
+        {% for key in editable %}
+        <label>{{ field_label(key) }}<input type="text" name="{{ key }}" value="{{ display_raw(doc, key) }}"></label>
+        {% endfor %}
+        {% for key, f in g.all_grounded() %}{% if key.startswith("base_") or key.startswith("vat_") %}
+        <label>{{ field_label(key) }}<input type="text" name="{{ key }}" value="{{ display_raw(doc, key) }}"></label>
+        {% endif %}{% endfor %}
+        <label>Nota<input type="text" name="note" placeholder="Por ejemplo: IBAN confirmado por teléfono"></label>
+        <div class="actions"><button class="btn primary">Guardar y volver a comprobar</button></div>
+      </form>
+      <div class="actions">
+        <form method="post" action="/doc/{{ doc.doc_id }}/approve"><input type="hidden" name="note" value="Aprobada manualmente">
+          <button class="btn">{{ "Archivar albarán" if doc.reasons|selectattr("code","equalto","delivery_note")|list else "Aprobar tal cual" }}</button></form>
+        <form method="post" action="/doc/{{ doc.doc_id }}/reject"><input type="hidden" name="note" value="Descartada en revisión">
+          <button class="btn">Descartar</button></form>
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+<script>
+document.querySelectorAll("tr[data-key]").forEach(row => {
+  const key = row.dataset.key;
+  const marks = [...document.querySelectorAll("mark")].filter(m => m.dataset.keys.split(" ").includes(key));
+  row.addEventListener("mouseenter", () => { row.classList.add("on"); marks.forEach(m => m.classList.add("on")); marks[0]?.scrollIntoView({block: "nearest"}); });
+  row.addEventListener("mouseleave", () => { row.classList.remove("on"); marks.forEach(m => m.classList.remove("on")); });
+});
+</script>
+{% endblock %}

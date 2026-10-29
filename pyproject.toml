@@ -1,0 +1,43 @@
+[project]
+name = "invoice-tray"
+version = "0.1.0"
+description = "Demo: supplier invoices from the inbox to an ERP import file, with a local model whose every field cites its source text."
+readme = "README.md"
+authors = [{ name = "Àlex Guardiola" }]
+license = { text = "MIT" }
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.162.0",
+    "httpx==0.28.1",
+    "jinja2==3.1.6",
+    "pydantic==2.14.1",
+    "pypdf==6.21.4",
+    "python-multipart==0.0.32",
+    "reportlab==5.1.0",
+    "uvicorn==0.54.0",
+]
+
+[project.scripts]
+invoice-tray = "invoice_tray.cli:main"
+demo = "invoice_tray.cli:demo"
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+    "ruff==0.17.3",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]

@@ -1,0 +1,96 @@
+{
+  "document_type": {
+    "value": "factura",
+    "quote": "FACTURA"
+  },
+  "supplier_name": {
+    "value": "Distribuciones Ficticias del Norte SA",
+    "quote": "Distribuciones Ficticias del Norte SA"
+  },
+  "supplier_tax_id": {
+    "value": "A00543215",
+    "quote": "NIF: A00543215"
+  },
+  "invoice_number": {
+    "value": "A/7731",
+    "quote": "Nº factura: A/7731"
+  },
+  "issue_date": {
+    "value": "2026-10-06",
+    "quote": "Fecha de emisión: 06/10/2026"
+  },
+  "due_date": {
+    "value": "2026-11-05",
+    "quote": "Vencimiento: 05/11/2026"
+  },
+  "vat_lines": [
+    {
+      "rate": 21,
+      "base": {
+        "value": 160.2,
+        "quote": "Base imponible 21 %:   160,20 €"
+      },
+      "vat": {
+        "value": 33.64,
+        "quote": "Cuota IVA 21 %:   33,64 €"
+      }
+    },
+    {
+      "rate": 10,
+      "base": {
+        "value": 556.8,
+        "quote": "Base imponible 10 %:   556,80 €"
+      },
+      "vat": {
+        "value": 55.68,
+        "quote": "Cuota IVA 10 %:   55,68 €"
+      }
+    }
+  ],
+  "irpf_rate": {
+    "value": null,
+    "quote": null
+  },
+  "irpf_amount": {
+    "value": null,
+    "quote": null
+  },
+  "total": {
+    "value": 806.32,
+    "quote": "TOTAL FACTURA:   806,32 €"
+  },
+  "iban": {
+    "value": "ES2999990002932345678901",
+    "quote": "IBAN: ES29 9999 0002 9323 4567 8901"
+  },
+  "line_items": [
+    {
+      "description": "Palé agua mineral 1,5 L (504 uds)",
+      "quantity": 2,
+      "unit_price": 189,
+      "amount": 378,
+      "quote": " Palé agua mineral 1,5 L (504 uds)   2   189,00   10 %   378,00 €"
+    },
+    {
+      "description": "Café en grano 1 kg",
+      "quantity": 12,
+      "unit_price": 14.9,
+      "amount": 178.8,
+      "quote": " Café en grano 1 kg   12   14,90   10 %   178,80 €"
+    },
+    {
+      "description": "Vasos compostables 200 ml (caja 1000)",
+      "quantity": 3,
+      "unit_price": 38.4,
+      "amount": 115.2,
+      "quote": " Vasos compostables 200 ml (caja 1000)   3   38,40   21 %   115,20 €"
+    },
+    {
+      "description": "Portes y entrega",
+      "quantity": 1,
+      "unit_price": 45,
+      "amount": 45,
+      "quote": " Portes y entrega   1   45,00   21 %   45,00 €"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "document_type": {
+    "value": "factura",
+    "quote": "FACTURA"
+  },
+  "supplier_name": {
+    "value": "Transportes Muestra SL",
+    "quote": "Transportes Muestra SL   FACTURA"
+  },
+  "supplier_tax_id": {
+    "value": "B00219873",
+    "quote": "NIF: B00219873"
+  },
+  "invoice_number": {
+    "value": null,
+    "quote": null
+  },
+  "issue_date": {
+    "value": "2026-10-17",
+    "quote": "Fecha de emisión: 17/10/2026"
+  },
+  "due_date": {
+    "value": "2026-11-16",
+    "quote": "Vencimiento: 16/11/2026"
+  },
+  "vat_lines": [
+    {
+      "rate": 21,
+      "base": {
+        "value": 273.0,
+        "quote": "Base imponible 21 %:   273,00 €"
+      },
+      "vat": {
+        "value": 57.33,
+        "quote": "Cuota IVA 21 %:   57,33 €"
+      }
+    }
+  ],
+  "irpf_rate": {
+    "value": null,
+    "quote": null
+  },
+  "irpf_amount": {
+    "value": null,
+    "quote": null
+  },
+  "total": {
+    "value": 330.33,
+    "quote": "TOTAL FACTURA:   330,33 €"
+  },
+  "iban": {
+    "value": "ES2399990009029012345678",
+    "quote": "IBAN: ES23 9999 0009 0290 1234 5678"
+  },
+  "line_items": [
+    {
+      "description": "Transporte Valladolid-Barcelona (palé)",
+      "quantity": 3,
+      "unit_price": 85.0,
+      "amount": 255.0,
+      "quote": " Transporte Valladolid-Barcelona (palé)   3   85,00   21 %   255,00 €"
+    },
+    {
+      "description": "Seguro de mercancía",
+      "quantity": 1,
+      "unit_price": 18.0,
+      "amount": 18.0,
+      "quote": " Seguro de mercancía   1   18,00   21 %   18,00 €"
+    }
+  ]
+}
