@@ -43,7 +43,7 @@ Requirements:
   `qwen3:14b` pulled (a 9.3 GB download).
 
 ```bash
-git clone --branch v0.1.0 https://github.com/SaskullOps/invoice-tray-demo.git
+git clone --branch v0.1.0 https://github.com/alexguardiola/invoice-tray-demo.git
 cd invoice-tray-demo
 make demo-fake   # no model needed: replays recorded answers
 ```

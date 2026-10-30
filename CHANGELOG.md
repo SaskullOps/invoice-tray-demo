@@ -25,4 +25,4 @@ All notable changes to this project are documented here. The format follows
   other sites.
 - Recorded `qwen3:14b` answers, so the tests and `--fake-llm` run without a model.
 
-[0.1.0]: https://github.com/SaskullOps/invoice-tray-demo/releases/tag/v0.1.0
+[0.1.0]: https://github.com/alexguardiola/invoice-tray-demo/releases/tag/v0.1.0

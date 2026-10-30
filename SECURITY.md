@@ -26,7 +26,7 @@ Only the latest release gets fixes.
 
 Please report it privately through GitHub: open the repository's **Security** tab and choose
 **Report a vulnerability**
-([direct link](https://github.com/SaskullOps/invoice-tray-demo/security/advisories/new)).
+([direct link](https://github.com/alexguardiola/invoice-tray-demo/security/advisories/new)).
 Do not open a public issue for it.
 
 This is a one-person project, so replies are best effort.
