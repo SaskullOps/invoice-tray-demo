@@ -25,9 +25,11 @@ short review queue for a person.
 > is outside the scope of Spain's invoicing-software rules (Verifactu). Do not extend it to issue
 > invoices.
 
-In my experience, typing a supplier invoice into an ERP by hand takes about 8 minutes: open
-the PDF, copy the tax id, number, dates, the base and VAT for each rate, any IRPF withholding
-and the IBAN, then check that the numbers add up. Most invoices are routine. The point is to
+Typing a supplier invoice into an ERP by hand takes about 8 minutes in a
+[case published by a software vendor](https://www.lido.app/es/automatizar-facturas) (a
+distributor in Valencia, 150 invoices a month): open the PDF, copy the tax id, number, dates,
+the base and VAT for each rate, any IRPF withholding and the IBAN, then check that the
+numbers add up. Most invoices are routine. The point is to
 do the routine ones automatically and show a person only the ones that need a decision,
 together with the reason.
 
